@@ -1,44 +1,55 @@
 import os
 import json
+from pygments import highlight
+from pygments.lexers import JsonLexer
+from pygments.formatters import TerminalFormatter
 
-Files = []
+def format_and_save_json(input_file):
+    try:
+        with open(input_file, "r") as json_file:
+            data = json.load(json_file)
 
-def formatter(files):
-    for f in files:
-        fname = f.split(".")
-        try:
-            with open(f,"r") as jsonfile:
-                formattedData=json.loads(jsonfile.read())
-                formattedData=json.dumps(formattedData, indent=4)
-                print(formattedData)
-            with open(fname[0]+"(formatted).json", "w") as newfile:
-                newfile.write(formattedData)
-        except Exception as err:
-            print("Error: \n"+str(err))
-    return formattedData
-    
+        formatted_data = json.dumps(data, indent=4)
+        output_file = input_file.replace(".json", "(formatted).json")
+
+        with open(output_file, "w") as new_file:
+            new_file.write(formatted_data)
+        
+        print("Formatted data saved to:", output_file)
+        return formatted_data
+    except Exception as err:
+        print("Error:", err)
 
 def input_files(method):
+    files = []
     if method == "m":
-        filename= str(input("Enter the file name: "))
-        print(filename)
-        if (filename[-5:] == ".json") and (filename in os.listdir()):
-            Files.append(filename)
+        filename = input("Enter the file name: ")
+        if filename.endswith(".json") and filename in os.listdir():
+            files.append(filename)
         else:
             raise Exception("Invalid file name!")
     elif method == "s":
         for item in os.listdir():
-            if (".json" in item) and ("formatted" not in item):
-                Files.append(item)
-            else:
-                continue
+            if item.endswith(".json") and "formatted" not in item:
+                files.append(item)
     else:
-        raise Exception("Not Found!\nEnter 'm' for manual file input , 's' for automatic scan.")
-        # input_files()
-    
-method = input("Enter the file name manually or scan for all json files in the Directory (m- for manual,s- for scan): \n>>>")
-input_files(method)
+        raise Exception("Invalid input!\nEnter 'm' for manual file input, 's' for automatic scan.")
 
-if len(Files) >= 1:
-    formatter(Files)
-# END
+    return files
+
+def main():
+    method = input("Enter 'm' to input files manually or 's' to scan for all JSON files in the directory: ")
+    files = input_files(method)
+
+    if len(files) >= 1:
+        for file in files:
+            formatted_data = format_and_save_json(file)
+            
+            # Highlight and print JSON data
+            lexer = JsonLexer()
+            formatter = TerminalFormatter()
+            highlighted_json = highlight(formatted_data, lexer, formatter)
+            print(highlighted_json)
+
+if __name__ == "__main__":
+    main()
